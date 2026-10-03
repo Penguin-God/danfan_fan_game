@@ -1,0 +1,777 @@
+
+<!DOCTYPE html>
+
+<html lang="ko">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Dialogue Table Editor</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+
+    background: #202124;
+    color: #eeeeee;
+
+    font-family:
+        "Malgun Gothic",
+        sans-serif;
+}
+
+.toolbar {
+    position: sticky;
+    top: 0;
+
+    z-index: 100;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 10px;
+
+    background: #2b2d31;
+
+    border-bottom:
+        1px solid #4c4f55;
+}
+
+button {
+    padding: 8px 14px;
+
+    background: #3b3e44;
+    color: white;
+
+    border:
+        1px solid #62656b;
+
+    border-radius: 5px;
+
+    cursor: pointer;
+}
+
+button:hover {
+    background: #4a4e55;
+}
+
+#saveButton {
+    background: #355da8;
+}
+
+#status {
+    margin-left: auto;
+
+    color: #bbbbbb;
+
+    font-size: 13px;
+}
+
+.container {
+    padding: 12px;
+
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+
+    min-width: 850px;
+
+    table-layout: fixed;
+
+    border-collapse: collapse;
+}
+
+th,
+td {
+    border:
+        1px solid #4c4f55;
+
+    vertical-align: top;
+}
+
+th {
+    padding: 8px;
+
+    background: #303236;
+
+    text-align: left;
+}
+
+td {
+    padding: 8px;
+
+    background: #25272a;
+}
+
+.number-column {
+    width: 52px;
+
+    text-align: center;
+}
+
+.image-column {
+    width: 270px;
+}
+
+.delete-column {
+    width: 76px;
+
+    text-align: center;
+}
+
+select,
+textarea {
+    width: 100%;
+
+    background: #151618;
+    color: #eeeeee;
+
+    border:
+        1px solid #5b5e63;
+
+    border-radius: 4px;
+}
+
+select {
+    height: 36px;
+
+    padding: 4px 7px;
+}
+
+textarea {
+    display: block;
+
+    min-height: 150px;
+
+    padding: 10px;
+
+    resize: vertical;
+
+    font-family:
+        "Malgun Gothic",
+        sans-serif;
+
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+textarea:focus,
+select:focus {
+    outline:
+        2px solid #668cff;
+}
+
+.preview {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    height: 150px;
+
+    margin-top: 8px;
+
+    background: #151618;
+
+    border:
+        1px solid #45484c;
+
+    overflow: hidden;
+
+    color: #777777;
+}
+
+.preview img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+}
+
+.empty {
+    padding: 40px;
+
+    text-align: center;
+
+    color: #888888;
+}
+
+.help {
+    padding:
+        0 12px 12px;
+
+    color: #aaaaaa;
+
+    font-size: 12px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="toolbar">
+
+    <button
+        id="addButton"
+        type="button"
+    >
+        + 대사 추가
+    </button>
+
+    <button
+        id="saveButton"
+        type="button"
+    >
+        저장
+    </button>
+
+    <span id="count"></span>
+
+    <span id="status"></span>
+
+</div>
+
+<div class="container">
+
+<table>
+
+<thead>
+
+<tr>
+
+    <th class="number-column">
+        #
+    </th>
+
+    <th class="image-column">
+        이미지
+    </th>
+
+    <th>
+        대사
+    </th>
+
+    <th class="delete-column">
+        삭제
+    </th>
+
+</tr>
+
+</thead>
+
+<tbody id="dialogueRows">
+</tbody>
+
+</table>
+
+</div>
+
+<div class="help">
+    Ctrl + S : 저장 / 이미지는 img/pictures 폴더에서 읽습니다.
+</div>
+
+<script>
+
+(() => {
+
+    "use strict";
+
+    const fs =
+        require("fs");
+
+    const path =
+        require("path");
+
+    const SAVE_PATH =
+        "C:\\Users\\user\\Desktop\\Game Porject\\RPG Maker\\Project1\\data\\DialogueTable.json";
+
+    const PICTURE_DIRECTORY =
+        "C:\\Users\\user\\Desktop\\Game Porject\\RPG Maker\\Project1\\img\\pictures";
+
+    const pictures =
+        ["Actor1_1.png","Actor1_2.png","Actor1_3.png","Actor1_4.png","Actor1_5.png","Actor1_6.png","Actor1_7.png","Actor1_8.png","Actor2_1.png","Actor2_2.png","Actor2_3.png","Actor2_4.png","Actor2_5.png","Actor2_6.png","Actor2_7.png","Actor2_8.png","Actor3_1.png","Actor3_2.png","Actor3_3.png","Actor3_4.png","Actor3_5.png","Actor3_6.png","Actor3_7.png","Actor3_8.png","Evil_1.png","Evil_2.png","Evil_3.png","Evil_4.png","Evil_5.png","Evil_6.png","Evil_7.png","Evil_8.png","Monster_1.png","Monster_2.png","Monster_3.png","Monster_4.png","Monster_5.png","Monster_6.png","Monster_7.png","Monster_8.png","Nature_1.png","Nature_2.png","Nature_3.png","Nature_4.png","Nature_5.png","Nature_6.png","Nature_7.png","Nature_8.png","People1_1.png","People1_2.png","People1_3.png","People1_4.png","People1_5.png","People1_6.png","People1_7.png","People1_8.png","People2_1.png","People2_2.png","People2_3.png","People2_4.png","People2_5.png","People2_6.png","People2_7.png","People2_8.png","People3_1.png","People3_2.png","People3_3.png","People3_4.png","People3_5.png","People3_6.png","People3_7.png","People3_8.png","People4_1.png","People4_2.png","People4_3.png","People4_4.png","People4_5.png","People4_6.png","People4_7.png","People4_8.png","SF_Actor1_1.png","SF_Actor1_2.png","SF_Actor1_3.png","SF_Actor1_4.png","SF_Actor1_5.png","SF_Actor1_6.png","SF_Actor1_7.png","SF_Actor1_8.png","SF_Actor2_1.png","SF_Actor2_2.png","SF_Actor2_3.png","SF_Actor2_4.png","SF_Actor2_5.png","SF_Actor2_6.png","SF_Actor2_7.png","SF_Actor2_8.png","SF_Actor3_1.png","SF_Actor3_2.png","SF_Actor3_3.png","SF_Actor3_4.png","SF_Actor3_5.png","SF_Actor3_6.png","SF_Actor3_7.png","SF_Actor3_8.png","SF_Monster_1.png","SF_Monster_2.png","SF_Monster_3.png","SF_Monster_4.png","SF_Monster_5.png","SF_Monster_6.png","SF_Monster_7.png","SF_Monster_8.png","SF_People1_1.png","SF_People1_2.png","SF_People1_3.png","SF_People1_4.png","SF_People1_5.png","SF_People1_6.png","SF_People1_7.png","SF_People1_8.png"];
+
+    let rows =
+        [];
+
+    const tableBody =
+        document.getElementById(
+            "dialogueRows"
+        );
+
+    const status =
+        document.getElementById(
+            "status"
+        );
+
+    const count =
+        document.getElementById(
+            "count"
+        );
+
+    // ---------------------------------------------------------
+    // 이미지 파일 경로
+    // ---------------------------------------------------------
+
+    function pictureUrl(fileName) {
+
+        if (!fileName) {
+            return "";
+        }
+
+        const fullPath =
+            path.join(
+                PICTURE_DIRECTORY,
+                fileName
+            );
+
+        const normalized =
+            fullPath.replace(
+                /\\/g,
+                "/"
+            );
+
+        return encodeURI(
+            "file:///" +
+            normalized
+        );
+    }
+
+    // ---------------------------------------------------------
+    // 이미지 미리보기
+    // ---------------------------------------------------------
+
+    function updatePreview(
+        preview,
+        row
+    ) {
+
+        preview.innerHTML = "";
+
+        if (!row.image) {
+
+            preview.textContent =
+                "이미지 없음";
+
+            return;
+        }
+
+        const image =
+            document.createElement(
+                "img"
+            );
+
+        image.src =
+            pictureUrl(
+                row.image
+            );
+
+        image.alt =
+            row.image;
+
+        preview.appendChild(
+            image
+        );
+    }
+
+    // ---------------------------------------------------------
+    // 표 다시 그리기
+    // ---------------------------------------------------------
+
+    function render() {
+
+        tableBody.innerHTML = "";
+
+        count.textContent =
+            rows.length +
+            "개 대사";
+
+        if (rows.length === 0) {
+
+            const tr =
+                document.createElement(
+                    "tr"
+                );
+
+            const td =
+                document.createElement(
+                    "td"
+                );
+
+            td.colSpan = 4;
+
+            td.className =
+                "empty";
+
+            td.textContent =
+                "대사가 없습니다. " +
+                "'+ 대사 추가'를 눌러주세요.";
+
+            tr.appendChild(td);
+
+            tableBody.appendChild(tr);
+
+            return;
+        }
+
+        rows.forEach(
+            (row, index) => {
+
+                const tr =
+                    document.createElement(
+                        "tr"
+                    );
+
+                // ---------------------------------------------
+                // 번호
+                // ---------------------------------------------
+
+                const numberCell =
+                    document.createElement(
+                        "td"
+                    );
+
+                numberCell.className =
+                    "number-column";
+
+                numberCell.textContent =
+                    index + 1;
+
+                // ---------------------------------------------
+                // 이미지
+                // ---------------------------------------------
+
+                const imageCell =
+                    document.createElement(
+                        "td"
+                    );
+
+                imageCell.className =
+                    "image-column";
+
+                const select =
+                    document.createElement(
+                        "select"
+                    );
+
+                const emptyOption =
+                    document.createElement(
+                        "option"
+                    );
+
+                emptyOption.value = "";
+
+                emptyOption.textContent =
+                    "(이미지 없음)";
+
+                select.appendChild(
+                    emptyOption
+                );
+
+                pictures.forEach(
+                    fileName => {
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+                        option.value =
+                            fileName;
+
+                        option.textContent =
+                            fileName;
+
+                        if (
+                            row.image ===
+                            fileName
+                        ) {
+                            option.selected =
+                                true;
+                        }
+
+                        select.appendChild(
+                            option
+                        );
+                    }
+                );
+
+                const preview =
+                    document.createElement(
+                        "div"
+                    );
+
+                preview.className =
+                    "preview";
+
+                updatePreview(
+                    preview,
+                    row
+                );
+
+                select.addEventListener(
+                    "change",
+                    () => {
+
+                        row.image =
+                            select.value;
+
+                        updatePreview(
+                            preview,
+                            row
+                        );
+                    }
+                );
+
+                imageCell.appendChild(
+                    select
+                );
+
+                imageCell.appendChild(
+                    preview
+                );
+
+                // ---------------------------------------------
+                // 대사
+                // ---------------------------------------------
+
+                const textCell =
+                    document.createElement(
+                        "td"
+                    );
+
+                const textarea =
+                    document.createElement(
+                        "textarea"
+                    );
+
+                textarea.value =
+                    row.text || "";
+
+                textarea.placeholder =
+                    "대사를 입력하세요.";
+
+                textarea.addEventListener(
+                    "input",
+                    () => {
+
+                        row.text =
+                            textarea.value;
+                    }
+                );
+
+                textCell.appendChild(
+                    textarea
+                );
+
+                // ---------------------------------------------
+                // 삭제
+                // ---------------------------------------------
+
+                const deleteCell =
+                    document.createElement(
+                        "td"
+                    );
+
+                deleteCell.className =
+                    "delete-column";
+
+                const deleteButton =
+                    document.createElement(
+                        "button"
+                    );
+
+                deleteButton.type =
+                    "button";
+
+                deleteButton.textContent =
+                    "삭제";
+
+                deleteButton.addEventListener(
+                    "click",
+                    () => {
+
+                        rows.splice(
+                            index,
+                            1
+                        );
+
+                        render();
+                    }
+                );
+
+                deleteCell.appendChild(
+                    deleteButton
+                );
+
+                // ---------------------------------------------
+
+                tr.appendChild(
+                    numberCell
+                );
+
+                tr.appendChild(
+                    imageCell
+                );
+
+                tr.appendChild(
+                    textCell
+                );
+
+                tr.appendChild(
+                    deleteCell
+                );
+
+                tableBody.appendChild(
+                    tr
+                );
+            }
+        );
+    }
+
+    // ---------------------------------------------------------
+    // 대사 추가
+    // ---------------------------------------------------------
+
+    function addRow() {
+
+        rows.push({
+            image: "",
+            text: ""
+        });
+
+        render();
+
+        const textareas =
+            document.querySelectorAll(
+                "textarea"
+            );
+
+        const last =
+            textareas[
+                textareas.length - 1
+            ];
+
+        if (last) {
+
+            last.focus();
+
+            last.scrollIntoView({
+                block: "center"
+            });
+        }
+    }
+
+    // ---------------------------------------------------------
+    // 저장
+    // ---------------------------------------------------------
+
+    function save() {
+
+        const data = {
+            version: 1,
+            rows: rows
+        };
+
+        try {
+
+            fs.writeFileSync(
+                SAVE_PATH,
+                JSON.stringify(
+                    data,
+                    null,
+                    2
+                ),
+                "utf8"
+            );
+
+            status.textContent =
+                "저장 완료 " +
+                new Date()
+                    .toLocaleTimeString();
+
+        }
+        catch (error) {
+
+            console.error(
+                error
+            );
+
+            status.textContent =
+                "저장 실패";
+
+            alert(
+                "저장 실패\n\n" +
+                error.message
+            );
+        }
+    }
+
+    // ---------------------------------------------------------
+    // 버튼
+    // ---------------------------------------------------------
+
+    document
+        .getElementById(
+            "addButton"
+        )
+        .addEventListener(
+            "click",
+            addRow
+        );
+
+    document
+        .getElementById(
+            "saveButton"
+        )
+        .addEventListener(
+            "click",
+            save
+        );
+
+    // Ctrl + S
+
+    window.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                (
+                    event.ctrlKey ||
+                    event.metaKey
+                ) &&
+                event.key
+                    .toLowerCase()
+                    === "s"
+            ) {
+
+                event.preventDefault();
+
+                save();
+            }
+        }
+    );
+
+    render();
+
+})();
+
+</script>
+
+</body>
+
+</html>

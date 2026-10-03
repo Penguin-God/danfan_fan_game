@@ -1,0 +1,19 @@
+# Save Data (테스트 플레이 세이브 데이터)
+save/
+
+# OS Generated Files (운영체제 자동 생성 찌꺼기 파일)
+.DS_Store
+.DS_Store?
+._*
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+
+# Deployment / Output (게임 배포/출력 폴더)
+Output/
+export/
+dist/
+
+# Node.js (추후 플러그인 개발 시 npm을 사용할 경우)
+node_modules/
