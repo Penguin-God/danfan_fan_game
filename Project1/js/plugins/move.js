@@ -62,14 +62,10 @@ Game_Player.prototype.checkOverlapEvent = function() {
     });
 
     if (overlapEvents.length > 0) {
-        const target = overlapEvents[0]; // 겹친 이벤트 중 첫 번째
-        // 2. 이벤트 메모란에 적어둔 <이름:OOO> 태그 정보 가져오기
-        const targetName = target.event().meta.이름; 
-        
-        if (targetName) {
-            // 이 targetName 변수로 텍스트 알림 UI를 화면에 띄웁니다.
-            console.log("현재 겹친 물건:", targetName); 
-        }
+        const target = overlapEvents[0];
+        if (!$gameMap.isEventRunning()) {
+                target.start();
+            }
     }
 };
 
