@@ -50,28 +50,47 @@ Game_Player.prototype.executeMove = function(direction) {
     } else if (direction === 9) {
         this.moveDiagonally(6, 8); // 우상
     }
-};
 
-// 매 프레임 업데이트되는 곳에 넣을 임시 함수 (원리 파악용)
-Game_Player.prototype.checkOverlapEvent = function() {
-    // 1. 현재 맵의 모든 이벤트를 돌면서 플레이어와 좌표 차이가 1칸(1.0) 미만인 것을 찾음
-    const overlapEvents = $gameMap.events().filter(event => {
-        const dx = Math.abs(this._x - event._x);
-        const dy = Math.abs(this._y - event._y);
-        return (dx < 1.0) && (dy < 1.0); // 사각형 중심 기준 겹침 판정
-    });
-
-    if (overlapEvents.length > 0) {
-        const target = overlapEvents[0];
-        if (!$gameMap.isEventRunning()) {
-                target.start();
-            }
+    // 이동마다 충돌 이벤트 검사
+    if (direction !== 0) {
+        this.checkEventTriggerTouch(this._x, this._y);
     }
 };
 
-// 충돌 검사를 위해 update갱신
-const _Game_Player_update = Game_Player.prototype.update;
-Game_Player.prototype.update = function(sceneActive) {
-    _Game_Player_update.call(this, sceneActive);
-    this.checkOverlapEvent(); // 우리가 만든 겹침 감지 함수를 매 프레임마다 추가로 실행!
+// 1. 공통 겹침(AABB) 판정 함수 추가
+Game_CharacterBase.prototype.isOverlapping = function(event) {
+    // 타일 칸(x, y)이 아닌 실제 픽셀 좌표(_realX, _realY) 기준 계산
+    const dx = Math.abs(this._realX - event._realX);
+    const dy = Math.abs(this._realY - event._realY);
+    return dx < 0.8 && dy < 0.8; // 0.8 타일 이내면 겹친 것으로 판정 (조절 가능)
+};
+
+// 2. [트리거 0: 결정 버튼] Z키 눌렀을 때 엔진이 부르는 원본 함수 덮어쓰기
+Game_Player.prototype.checkEventTriggerHere = function(triggers) {
+    if (this.canStartLocalEvents()) {
+        for (const event of $gameMap.events()) {
+            // 트리거 조건이 맞고, 커서와 겹쳤다면 알만툴 정상 흐름으로 start
+            if (event.isTriggerIn(triggers) && this.isOverlapping(event)) {
+                event.start();
+            }
+        }
+    }
+};
+
+// 3. 커서 마커 방식이므로 바라보는 방향(There) 조사도 제자리(Here) 겹침 판정으로 통합
+Game_Player.prototype.checkEventTriggerThere = function(triggers) {
+    this.checkEventTriggerHere(triggers); 
+};
+
+// 4. [트리거 1, 2: 접촉] 이동 중 엔진이 부르는 원본 함수 덮어쓰기
+Game_Player.prototype.checkEventTriggerTouch = function(x, y) {
+    if (this.canStartLocalEvents()) {
+        for (const event of $gameMap.events()) {
+            if (event.isTriggerIn([1, 2]) && this.isOverlapping(event)) {
+                if (!event.isStarting()) {
+                    event.start();
+                }
+            }
+        }
+    }
 };
