@@ -62,10 +62,9 @@ Game_CharacterBase.prototype.isOverlapping = function(event) {
     // 타일 칸(x, y)이 아닌 실제 픽셀 좌표(_realX, _realY) 기준 계산
     const dx = Math.abs(this._realX - event._realX);
     const dy = Math.abs(this._realY - event._realY);
-    return dx < 0.8 && dy < 0.8; // 0.8 타일 이내면 겹친 것으로 판정 (조절 가능)
+    return dx < 0.5 && dy < 0.5; // 0.5 타일 이내면 겹친 것으로 판정
 };
 
-// 2. [트리거 0: 결정 버튼] Z키 눌렀을 때 엔진이 부르는 원본 함수 덮어쓰기
 Game_Player.prototype.checkEventTriggerHere = function(triggers) {
     if (this.canStartLocalEvents()) {
         for (const event of $gameMap.events()) {
