@@ -3,5 +3,5 @@
 var $plugins =
 [
 {"name":"Akena_DialogueTable","status":true,"description":"(v1.0) 이미지 + 긴 대사를 목록으로 편집/재생하는 대화 플러그인 <Akena_DialogueTable>","parameters":{}},
-{"name":"move","status":false,"description":"(v1.0) 이동 플러그인. 8방향 + 미세이동","parameters":{}}
+{"name":"move","status":true,"description":"(v1.0) 이동 플러그인. 8방향 + 미세이동","parameters":{}}
 ];
